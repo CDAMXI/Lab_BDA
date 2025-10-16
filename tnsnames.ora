@@ -1,0 +1,7 @@
+LABORA =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = oralabos.dsic.upv.es )(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVICE_NAME = labora.dsic.upv.es )
+    )
+  )
