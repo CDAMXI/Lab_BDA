@@ -293,3 +293,98 @@ WHERE M.YEAR < 1950
 ORDER BY M.TITLE;
 
 --Exercise 28
+
+SELECT COUNT(*)
+FROM MOVIE M
+WHERE (SELECT COUNT(*)
+      FROM PERFORMS P
+      WHERE P.MOVIE_CODE = M.MOVIE_CODE) < 4;
+
+--Exercise 29
+
+SELECT DISTINCT M.DIRECTOR
+FROM MOVIE M
+WHERE (SELECT SUM(M1.LENGTH)
+       FROM MOVIE M1
+       WHERE M1.DIRECTOR = M.DIRECTOR) > 250;
+
+--Exercise 30
+
+SELECT EXTRACT(YEAR FROM A.BIRTH_DATE) AS YEAR
+FROM ACTOR_E A
+GROUP BY EXTRACT(YEAR FROM A.BIRTH_DATE)
+HAVING COUNT(*) > 3;
+
+--Exercise 31
+
+SELECT A.ACT_CODE, A.NAME
+FROM ACTOR_E A
+JOIN PERFORMS P       ON P.ACT_CODE = A.ACT_CODE
+JOIN CLASSIFICATION C ON C.MOVIE_CODE = P.MOVIE_CODE
+WHERE C.GEN_CODE = 'DD8'
+  AND A.BIRTH_DATE = (
+        SELECT MAX(A2.BIRTH_DATE)
+        FROM ACTOR_E A2
+        JOIN PERFORMS P2       ON P2.ACT_CODE = A2.ACT_CODE
+        JOIN CLASSIFICATION C2 ON C2.MOVIE_CODE = P2.MOVIE_CODE
+        WHERE C2.GEN_CODE = 'DD8'
+);
+
+--Exercise 32
+
+SELECT C.COUNTRY_CODE, C.NAME
+FROM COUNTRY C
+WHERE NOT EXISTS(SELECT *
+                FROM ACTOR_E A
+                WHERE A.COUNTRY_CODE = C.COUNTRY_CODE
+                AND EXTRACT(YEAR FROM A.BIRTH_DATE) NOT BETWEEN 1900 AND 1999)
+AND EXISTS(SELECT *
+          FROM ACTOR_E A
+          WHERE A.COUNTRY_CODE = C.COUNTRY_CODE)
+ORDER BY C.NAME;
+
+--Exercise 33
+
+SELECT A.ACT_CODE, A.NAME
+FROM ACTOR_E A
+WHERE NOT EXISTS(SELECT *
+                 FROM PERFORMS P
+                 WHERE P.ACT_CODE = A.ACT_CODE AND P.ROLE NOT LIKE 'Secundario')
+AND EXISTS (SELECT *
+            FROM PERFORMS P
+            WHERE P.ACT_CODE = A.ACT_CODE);
+
+--Exercise 34
+
+-- Actores que aparecen en TODAS las pelis dirigidas por Guy Ritchie
+SELECT A.ACT_CODE, A.NAME
+FROM ACTOR_E A
+WHERE NOT EXISTS (                                  -- No debe existir...
+    SELECT *
+    FROM MOVIE M
+    WHERE M.DIRECTOR LIKE '%Guy Ritchie%'           -- ...ninguna peli de Guy Ritchie
+      AND NOT EXISTS (                              -- ...para la que NO exista
+          SELECT *                                  -- ...una actuación de ese actor
+          FROM PERFORMS P
+          WHERE P.ACT_CODE = A.ACT_CODE
+            AND P.MOVIE_CODE = M.MOVIE_CODE
+      )
+)
+AND EXISTS (                                        -- Evitar verdad vacía:
+    SELECT *                                        -- exigir que Guy Ritchie
+    FROM MOVIE M                                    -- tenga al menos 1 peli
+    WHERE M.DIRECTOR LIKE '%Guy Ritchie%'
+);
+
+--Exercise 35
+
+SELECT A.ACT_CODE, A.NAME
+FROM ACCTOR_E A
+WHERE NOT EXISTS(SELECT *
+                FROM MOVIE M
+                WHERE M.DIRECTOR LIKE 'John Steel' AND NOT EXISTS(SELECT *
+                                                              FROM PERFORMS P
+                                                              WHERE P.MOVIE_CODE = M.MOVIE_CODE AND P.ACT_CODE = A.ACT_CODE))
+AND EXISTS (SELECT *
+          FROM MOVIE M
+          WHERE M.DIRECTOR LIKE 'John Steel');
